@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Bank Management System{% endblock %}
+
+{% block content %}
+<!-- Add Font Awesome CDN in the head -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard</h2>
+        <div>
+            <a href="{{ url_for('add_customer') }}" class="btn btn-primary">
+                <i class="fas fa-user-plus me-2"></i>Add Customer
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total Customers</h6>
+                            <h3 class="mt-2 mb-0">{{ total_customers }}</h3>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Active Customers</h6>
+                            <h3 class="mt-2 mb-0">{{ active_customers }}</h3>
+                        </div>
+                        <i class="fas fa-user-check fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total Balance</h6>
+                            <h3 class="mt-2 mb-0">₹{{ "{:,.2f}".format(total_balance) }}</h3>
+                        </div>
+                        <i class="fas fa-rupee-sign fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">New Today</h6>
+                            <h3 class="mt-2 mb-0">{{ todays_registrations }}</h3>
+                        </div>
+                        <i class="fas fa-user-plus fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Table -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list me-2"></i>Customer List</h5>
+                <div class="input-group" style="width: 300px;">
+                    <input type="text" id="customerSearch" class="form-control" placeholder="Search customers...">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="customersTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Account Number</th>
+                            <th>Username</th>
+                            <th>Balance</th>
+                            <th>Registered On</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr data-customer-id="{{ customer._id }}">
+                            <td>{{ customer.account_number }}</td>
+                            <td>{{ customer.username }}</td>
+                            <td>₹{{ "{:,.2f}".format(customer.balance) }}</td>
+                            <td>{{ customer.registered_on.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <span class="status-badge badge {% if customer.is_active %}bg-success{% else %}bg-danger{% endif %} rounded-pill">
+                                    <i class="fas {% if customer.is_active %}fa-check-circle{% else %}fa-times-circle{% endif %} me-1"></i>
+                                    {% if customer.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-cog me-1"></i>Actions
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('admin_customer_actions', customer_id=customer._id) }}">
+                                                <i class="fas fa-money-bill-transfer me-2"></i>Transactions
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('view_customer_transactions', customer_id=customer._id) }}">
+                                                <i class="fas fa-history me-2"></i>History
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ url_for('generate_receipt', customer_id=customer._id) }}" target="_blank">
+                                                <i class="fas fa-file-invoice me-2"></i>Generate Receipt
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <button class="dropdown-item status-action {% if customer.is_active %}text-danger{% else %}text-success{% endif %}" 
+                                                    onclick="confirmStatusChange('{{ customer._id }}', '{% if customer.is_active %}deactivate{% else %}activate{% endif %}')">
+                                                <i class="fas {% if customer.is_active %}fa-user-slash{% else %}fa-user-check{% endif %} me-2"></i>
+                                                {% if customer.is_active %}Deactivate{% else %}Activate{% endif %}
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-item i {
+    width: 20px;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border: none;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+    border-left: none;
+}
+
+#customerSearch {
+    border-right: none;
+}
+
+#customerSearch:focus {
+    box-shadow: none;
+    border-color: #ced4da;
+}
+
+.status-badge {
+    transition: all 0.3s ease;
+}
+</style>
+
+<script>
+// Add search functionality
+document.getElementById('customerSearch').addEventListener('keyup', function() {
+    let searchText = this.value.toLowerCase();
+    let tableRows = document.querySelectorAll('tbody tr');
+    
+    tableRows.forEach(row => {
+        let text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchText) ? '' : 'none';
+    });
+});
+
+function confirmStatusChange(customerId, action) {
+    let message = action === 'deactivate' ? 
+        'Are you sure you want to deactivate this customer?' : 
+        'Are you sure you want to activate this customer?';
+    
+    if (confirm(message)) {
+        // Show loading state
+        const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+        const statusBadge = row.querySelector('.status-badge');
+        const statusAction = row.querySelector('.status-action');
+        
+        // Update UI immediately to show action in progress
+        statusBadge.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
+        
+        // Make the request
+        fetch(`/admin/customer/${customerId}/${action}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(() => {
+                // Update the status badge
+                const isNowActive = action === 'activate';
+                statusBadge.className = `status-badge badge rounded-pill ${isNowActive ? 'bg-success' : 'bg-danger'}`;
+                statusBadge.innerHTML = `
+                    <i class="fas ${isNowActive ? 'fa-check-circle' : 'fa-times-circle'} me-1"></i>
+                    ${isNowActive ? 'Active' : 'Inactive'}
+                `;
+                
+                // Update the action button
+                statusAction.className = `dropdown-item status-action ${isNowActive ? 'text-danger' : 'text-success'}`;
+                statusAction.innerHTML = `
+                    <i class="fas ${isNowActive ? 'fa-user-slash' : 'fa-user-check'} me-2"></i>
+                    ${isNowActive ? 'Deactivate' : 'Activate'}
+                `;
+                statusAction.onclick = () => confirmStatusChange(customerId, isNowActive ? 'deactivate' : 'activate');
+                
+                // Refresh the page to update statistics
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                statusBadge.className = 'status-badge badge bg-warning rounded-pill';
+                statusBadge.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Error';
+                alert('Error updating customer status. Please try again.');
+            });
+    }
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Actions - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Deposit Money</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('admin_deposit', customer_id=customer._id) }}" method="POST">
+                        <div class="mb-3">
+                            <label for="deposit_amount" class="form-label">Amount</label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="deposit_amount" name="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="deposit_notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="deposit_notes" name="notes" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">Deposit</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Withdraw Money</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('admin_withdraw', customer_id=customer._id) }}" method="POST">
+                        <div class="mb-3">
+                            <label for="withdraw_amount" class="form-label">Amount</label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="withdraw_amount" name="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="withdraw_notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="withdraw_notes" name="notes" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning">Withdraw</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Transfer Money</h5>
+                </div>
+                <div class="card-body">
+                    <form action="{{ url_for('admin_transfer', customer_id=customer._id) }}" method="POST">
+                        <div class="mb-3">
+                            <label for="recipient" class="form-label">Recipient Email/Username</label>
+                            <input type="text" class="form-control" id="recipient" name="recipient" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transfer_amount" class="form-label">Amount</label>
+                            <input type="number" step="0.01" min="0" class="form-control" id="transfer_amount" name="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transfer_notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="transfer_notes" name="notes" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Transfer</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Name:</strong> {{ customer.username }}</p>
+                            <p><strong>Email:</strong> {{ customer.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Account Number:</strong> {{ account.account_number }}</p>
+                            <p><strong>Current Balance:</strong> ₹{{ "%.2f"|format(account.balance) }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Transactions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>{{ transaction.created_at_formatted }}</td>
+                                    <td>
+                                        {% if transaction.type == 'deposit' %}
+                                            <span class="badge bg-success">Deposit</span>
+                                        {% elif transaction.type == 'withdrawal' %}
+                                            <span class="badge bg-warning">Withdrawal</span>
+                                        {% elif transaction.type == 'transfer_out' %}
+                                            <span class="badge bg-primary">Transfer Out</span>
+                                        {% elif transaction.type == 'transfer_in' %}
+                                            <span class="badge bg-info">Transfer In</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>₹{{ "%.2f"|format(transaction.amount) }}</td>
+                                    <td>{{ transaction.notes|default('') }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No transactions found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

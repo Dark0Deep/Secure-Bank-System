@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Report - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">
+            <i class="fas fa-users text-primary me-2"></i>Customer Report
+        </h2>
+        <div>
+            <button class="btn btn-success" id="generateSelectedReceipts">
+                <i class="fas fa-file-invoice me-2"></i>Generate Selected Receipts
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total Customers</h6>
+                            <h2 class="mt-2 mb-0">{{ customers|length }}</h2>
+                        </div>
+                        <i class="fas fa-users fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Active Customers</h6>
+                            <h2 class="mt-2 mb-0">{{ active_customers }}</h2>
+                        </div>
+                        <i class="fas fa-user-check fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Inactive Customers</h6>
+                            <h2 class="mt-2 mb-0">{{ inactive_customers }}</h2>
+                        </div>
+                        <i class="fas fa-user-slash fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-0">Total Balance</h6>
+                            <h2 class="mt-2 mb-0">₹{{ total_balance|default(0)|round(2) }}</h2>
+                        </div>
+                        <i class="fas fa-rupee-sign fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="customerTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="selectAll">
+                                </div>
+                            </th>
+                            <th><i class="fas fa-user me-2"></i>Username</th>
+                            <th><i class="fas fa-envelope me-2"></i>Email</th>
+                            <th><i class="fas fa-hashtag me-2"></i>Account Number</th>
+                            <th><i class="fas fa-rupee-sign me-2"></i>Balance</th>
+                            <th><i class="fas fa-calendar-alt me-2"></i>Join Date</th>
+                            <th><i class="fas fa-circle me-2"></i>Status</th>
+                            <th><i class="fas fa-cogs me-2"></i>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>
+                                <div class="form-check">
+                                    <input class="form-check-input customer-select" type="checkbox" value="{{ customer._id }}">
+                                </div>
+                            </td>
+                            <td>{{ customer.username }}</td>
+                            <td>{{ customer.email }}</td>
+                            <td><span class="badge bg-light text-dark">{{ customer.account_number }}</span></td>
+                            <td>₹{{ "%.2f"|format(customer.balance|default(0)) }}</td>
+                            <td>
+                                {% if customer.registered_on %}
+                                    {% if customer.registered_on is string %}
+                                        {{ customer.registered_on }}
+                                    {% else %}
+                                        {{ customer.registered_on.strftime('%Y-%m-%d') }}
+                                    {% endif %}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if customer.is_active %}
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check-circle me-1"></i>Active
+                                </span>
+                                {% else %}
+                                <span class="badge bg-danger">
+                                    <i class="fas fa-times-circle me-1"></i>Inactive
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <!-- View Transactions Button -->
+                                    <a href="{{ url_for('view_customer_transactions', customer_id=customer._id) }}" 
+                                       class="btn btn-info btn-sm action-btn" 
+                                       data-bs-toggle="tooltip" 
+                                       title="View Transactions">
+                                        <i class="fas fa-history"></i>
+                                    </a>
+                                    
+                                    <!-- Generate Receipt Button -->
+                                    <a href="{{ url_for('generate_receipt', customer_id=customer._id) }}" 
+                                       class="btn btn-primary btn-sm action-btn"
+                                       data-bs-toggle="tooltip" 
+                                       title="Generate Receipt">
+                                        <i class="fas fa-file-invoice"></i>
+                                    </a>
+                                    
+                                    <!-- Toggle Status Button -->
+                                    {% if customer.is_active %}
+                                    <a href="{{ url_for('deactivate_customer', customer_id=customer._id) }}" 
+                                       class="btn btn-danger btn-sm action-btn"
+                                       data-bs-toggle="tooltip" 
+                                       title="Deactivate Account">
+                                        <i class="fas fa-user-slash"></i>
+                                    </a>
+                                    {% else %}
+                                    <a href="{{ url_for('activate_customer', customer_id=customer._id) }}" 
+                                       class="btn btn-success btn-sm action-btn"
+                                       data-bs-toggle="tooltip" 
+                                       title="Activate Account">
+                                        <i class="fas fa-user-check"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Card Styles */
+.card {
+    border: none;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Table Styles */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    border-top: none;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+.action-btn i {
+    font-size: 0.9rem;
+}
+
+/* Status Badge */
+.badge {
+    padding: 8px 12px;
+    font-weight: 500;
+}
+
+/* Account Number Badge */
+.badge.bg-light {
+    border: 1px solid #dee2e6;
+}
+
+/* Statistics Cards */
+.card .fa-2x {
+    font-size: 2rem;
+}
+
+.opacity-50 {
+    opacity: 0.5;
+}
+
+/* Checkbox Styling */
+.form-check-input {
+    cursor: pointer;
+}
+
+/* Responsive Table */
+.table-responsive {
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Button Animations */
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Tooltip Customization */
+.tooltip {
+    font-size: 0.8rem;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    });
+
+    // Select all functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const customerCheckboxes = document.getElementsByClassName('customer-select');
+
+    selectAllCheckbox.addEventListener('change', function() {
+        Array.from(customerCheckboxes).forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+    });
+
+    // Generate selected receipts
+    document.getElementById('generateSelectedReceipts').addEventListener('click', function() {
+        const selectedCustomers = Array.from(customerCheckboxes)
+            .filter(checkbox => checkbox.checked)
+            .map(checkbox => checkbox.value);
+
+        if (selectedCustomers.length === 0) {
+            alert('Please select at least one customer');
+            return;
+        }
+
+        // Open receipts in new windows
+        selectedCustomers.forEach(customerId => {
+            window.open(`/admin/customer/${customerId}/receipt`, '_blank');
+        });
+    });
+});
+</script>
+{% endblock %} 

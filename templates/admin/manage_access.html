@@ -1,0 +1,518 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Customer Access - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Customer Access Management</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Access Management</li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">Total Customers</h6>
+                    <h2 class="mb-0">{{ total_customers }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">Active Accounts</h6>
+                    <h2 class="mb-0">{{ active_customers }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-4">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">Deactivated Accounts</h6>
+                    <h2 class="mb-0">{{ inactive_customers }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Access Control Table -->
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-6">
+                    <h5 class="mb-0">Customer Access Control</h5>
+                </div>
+                <div class="col-12 col-md-6">
+                    <div class="d-flex gap-2 justify-content-md-end mt-2 mt-md-0">
+                        <div class="input-group">
+                            <input type="text" id="customerSearch" class="form-control" placeholder="Search customers...">
+                            <button class="btn btn-outline-secondary" type="button">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown">
+                                <i class="fas fa-filter"></i> Filter
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item active" href="#" data-filter="all">All Accounts</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="active">Active Only</a></li>
+                                <li><a class="dropdown-item" href="#" data-filter="inactive">Deactivated Only</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="accessTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Account No.</th>
+                            <th>Customer Name</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Last Activity</th>
+                            <th>Deactivated By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr class="customer-row" 
+                            data-customer-id="{{ customer._id }}"
+                            data-account="{{ customer.account_number }}"
+                            data-name="{{ customer.username }}"
+                            data-email="{{ customer.email }}"
+                            data-status="{{ 'active' if customer.is_active else 'inactive' }}">
+                            <td>{{ customer.account_number }}</td>
+                            <td>{{ customer.username }}</td>
+                            <td>{{ customer.email }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if customer.is_active else 'danger' }}">
+                                    {{ 'Active' if customer.is_active else 'Inactive' }}
+                                </span>
+                            </td>
+                            <td>{{ customer.last_activity.strftime('%Y-%m-%d %H:%M') if customer.last_activity else 'N/A' }}</td>
+                            <td>
+                                {% if not customer.is_active and customer.deactivated_by %}
+                                    {{ customer.deactivated_by_name }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    {% if customer.is_active %}
+                                    <button class="btn btn-sm btn-danger" 
+                                            onclick="showDeactivateModal('{{ customer._id }}', '{{ customer.username }}')"
+                                            title="Deactivate Account">
+                                        <i class="fas fa-user-slash"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-success" 
+                                            onclick="showReactivateModal('{{ customer._id }}', '{{ customer.username }}')"
+                                            title="Reactivate Account">
+                                        <i class="fas fa-user-check"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn btn-sm btn-info" 
+                                            onclick="viewAccessHistory('{{ customer._id }}')"
+                                            title="View Access History">
+                                        <i class="fas fa-history"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deactivate Modal -->
+<div class="modal fade" id="deactivateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Deactivate Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to deactivate the account for <strong id="customerName"></strong>?</p>
+                <div class="mb-3">
+                    <label for="deactivationReason" class="form-label">Reason for Deactivation</label>
+                    <textarea class="form-control" id="deactivationReason" rows="3" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeactivate">Deactivate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Access History Modal -->
+<div class="modal fade" id="accessHistoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Access History</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table" id="accessHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Action</th>
+                                <th>Performed By</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Filled dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentCustomerId = null;
+let deactivateModal = null;
+let accessHistoryModal = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    deactivateModal = new bootstrap.Modal(document.getElementById('deactivateModal'));
+    accessHistoryModal = new bootstrap.Modal(document.getElementById('accessHistoryModal'));
+    
+    // Initialize search and filter functionality
+    initializeSearch();
+    initializeFilters();
+});
+
+function showDeactivateModal(customerId, username) {
+    currentCustomerId = customerId;
+    document.getElementById('customerName').textContent = username;
+    document.getElementById('deactivationReason').value = '';
+    deactivateModal.show();
+}
+
+function showReactivateModal(customerId, username) {
+    if (confirm(`Are you sure you want to reactivate the account for ${username}?`)) {
+        reactivateAccount(customerId);
+    }
+}
+
+document.getElementById('confirmDeactivate').addEventListener('click', function() {
+    const reason = document.getElementById('deactivationReason').value.trim();
+    if (!reason) {
+        alert('Please provide a reason for deactivation');
+        return;
+    }
+    
+    deactivateAccount(currentCustomerId, reason);
+});
+
+function deactivateAccount(customerId, reason) {
+    const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+    const button = row.querySelector('.btn-danger');
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    fetch(`/admin/customer/${customerId}/deactivate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateRowAfterDeactivation(row, data.admin_name);
+            updateStatistics(1);
+            showNotification('Account deactivated successfully', 'success');
+        } else {
+            showNotification(data.message || 'Error deactivating account', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error deactivating account', 'error');
+    })
+    .finally(() => {
+        deactivateModal.hide();
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-user-slash"></i>';
+    });
+}
+
+function reactivateAccount(customerId) {
+    const row = document.querySelector(`tr[data-customer-id="${customerId}"]`);
+    const button = row.querySelector('.btn-success');
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    
+    fetch(`/admin/customer/${customerId}/reactivate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateRowAfterReactivation(row);
+            updateStatistics(-1);
+            showNotification('Account reactivated successfully', 'success');
+        } else {
+            showNotification(data.message || 'Error reactivating account', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Error reactivating account', 'error');
+    })
+    .finally(() => {
+        button.disabled = false;
+        button.innerHTML = '<i class="fas fa-user-check"></i>';
+    });
+}
+
+function updateRowAfterDeactivation(row, adminName) {
+    row.setAttribute('data-status', 'inactive');
+    const statusBadge = row.querySelector('.badge');
+    statusBadge.className = 'badge bg-danger';
+    statusBadge.textContent = 'Inactive';
+    
+    const actionButtons = row.querySelector('.d-flex');
+    actionButtons.innerHTML = `
+        <button class="btn btn-sm btn-success" 
+                onclick="showReactivateModal('${row.dataset.customerId}', '${row.dataset.name}')"
+                title="Reactivate Account">
+            <i class="fas fa-user-check"></i>
+        </button>
+        <button class="btn btn-sm btn-info" 
+                onclick="viewAccessHistory('${row.dataset.customerId}')"
+                title="View Access History">
+            <i class="fas fa-history"></i>
+        </button>
+    `;
+    
+    // Update deactivated by column
+    row.cells[5].textContent = adminName;
+}
+
+function updateRowAfterReactivation(row) {
+    row.setAttribute('data-status', 'active');
+    const statusBadge = row.querySelector('.badge');
+    statusBadge.className = 'badge bg-success';
+    statusBadge.textContent = 'Active';
+    
+    const actionButtons = row.querySelector('.d-flex');
+    actionButtons.innerHTML = `
+        <button class="btn btn-sm btn-danger" 
+                onclick="showDeactivateModal('${row.dataset.customerId}', '${row.dataset.name}')"
+                title="Deactivate Account">
+            <i class="fas fa-user-slash"></i>
+        </button>
+        <button class="btn btn-sm btn-info" 
+                onclick="viewAccessHistory('${row.dataset.customerId}')"
+                title="View Access History">
+            <i class="fas fa-history"></i>
+        </button>
+    `;
+    
+    // Clear deactivated by column
+    row.cells[5].textContent = '-';
+}
+
+function updateStatistics(change) {
+    const activeElement = document.querySelector('.card.bg-success h2');
+    const inactiveElement = document.querySelector('.card.bg-danger h2');
+    
+    if (activeElement && inactiveElement) {
+        const activeCount = parseInt(activeElement.textContent);
+        const inactiveCount = parseInt(inactiveElement.textContent);
+        
+        activeElement.textContent = activeCount - change;
+        inactiveElement.textContent = inactiveCount + change;
+    }
+}
+
+function viewAccessHistory(customerId) {
+    fetch(`/admin/customer/${customerId}/access-history`)
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.querySelector('#accessHistoryTable tbody');
+            tbody.innerHTML = '';
+            
+            data.history.forEach(entry => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${entry.date}</td>
+                    <td>${entry.action}</td>
+                    <td>${entry.admin_name}</td>
+                    <td>${entry.reason || '-'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            accessHistoryModal.show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('Error loading access history', 'error');
+        });
+}
+
+function showNotification(message, type) {
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050;';
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+
+function initializeSearch() {
+    const searchInput = document.getElementById('customerSearch');
+    searchInput.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('.customer-row');
+        
+        rows.forEach(row => {
+            const searchableText = [
+                row.dataset.account,
+                row.dataset.name,
+                row.dataset.email
+            ].join(' ').toLowerCase();
+            
+            row.style.display = searchableText.includes(searchTerm) ? '' : 'none';
+        });
+    });
+}
+
+function initializeFilters() {
+    document.querySelectorAll('[data-filter]').forEach(filter => {
+        filter.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Update active state
+            document.querySelectorAll('[data-filter]').forEach(f => {
+                f.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // Update button text
+            const filterText = this.textContent.trim();
+            document.getElementById('filterDropdown').innerHTML = 
+                `<i class="fas fa-filter"></i> ${filterText}`;
+            
+            // Apply filter
+            const filterType = this.getAttribute('data-filter');
+            const rows = document.querySelectorAll('.customer-row');
+            
+            rows.forEach(row => {
+                const status = row.getAttribute('data-status');
+                switch(filterType) {
+                    case 'active':
+                        row.style.display = status === 'active' ? '' : 'none';
+                        break;
+                    case 'inactive':
+                        row.style.display = status === 'inactive' ? '' : 'none';
+                        break;
+                    default:
+                        row.style.display = '';
+                }
+            });
+        });
+    });
+}
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.table th {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+}
+
+.fa-spin {
+    animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.alert {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+}
+
+.modal-content {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.table-responsive {
+    margin: 0 -1px;
+}
+
+@media (max-width: 768px) {
+    .d-flex.gap-2 {
+        flex-wrap: wrap;
+    }
+    
+    .input-group {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %} 

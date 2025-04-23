@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Transactions - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <h2>Customer Transactions</h2>
+            <p class="text-muted">Viewing transactions for {{ customer.username }}</p>
+        </div>
+        <div class="col text-end">
+            <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Customer Information Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Customer Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <p><strong>Username:</strong> {{ customer.username }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>Email:</strong> {{ customer.email }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>Account Number:</strong> {{ account.account_number }}</p>
+                </div>
+                <div class="col-md-3">
+                    <p><strong>Current Balance:</strong> ₹{{ account.balance|round(2) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Transaction History</h5>
+            <span class="badge bg-primary">{{ transactions|length }} transactions</span>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Transaction ID</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if transactions %}
+                            {% for transaction in transactions %}
+                            <tr>
+                                <td>{{ transaction.created_at_formatted }}</td>
+                                <td>{{ transaction._id }}</td>
+                                <td>
+                                    {% if transaction.type == 'deposit' %}
+                                        <span class="badge bg-success">Deposit</span>
+                                    {% elif transaction.type == 'withdrawal' %}
+                                        <span class="badge bg-danger">Withdrawal</span>
+                                    {% elif transaction.type == 'transfer' %}
+                                        <span class="badge bg-info">Transfer</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ transaction.type }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>₹{{ transaction.amount|round(2) }}</td>
+                                <td>{{ transaction.description or 'N/A' }}</td>
+                                <td>
+                                    {% if transaction.status == 'completed' %}
+                                        <span class="badge bg-success">Completed</span>
+                                    {% elif transaction.status == 'pending' %}
+                                        <span class="badge bg-warning">Pending</span>
+                                    {% elif transaction.status == 'failed' %}
+                                        <span class="badge bg-danger">Failed</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ transaction.status }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center">No transactions found for this customer.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Debug Information -->
+{% if debug %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Debug Information</h5>
+        </div>
+        <div class="card-body">
+            <pre>{{ debug_info|tojson(indent=2) }}</pre>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %} 

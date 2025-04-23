@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Management - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Customer Management</h2>
+        <a href="{{ url_for('add_customer') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Add New Customer
+        </a>
+    </div>
+
+    <!-- Customer List -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Account Number</th>
+                            <th>Balance</th>
+                            <th>Join Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr>
+                            <td>{{ customer.username }}</td>
+                            <td>{{ customer.email }}</td>
+                            <td>{{ customer.account_number }}</td>
+                            <td>₹{{ "%.2f"|format(customer.balance) }}</td>
+                            <td>{{ customer.created_at.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                <span class="badge {% if customer.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ "Active" if customer.is_active else "Inactive" }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{{ url_for('view_customer_transactions', customer_id=customer._id) }}" 
+                                       class="btn btn-sm btn-info">
+                                        <i class="fas fa-history"></i> View
+                                    </a>
+                                    {% if customer.is_active %}
+                                    <button class="btn btn-sm btn-warning" 
+                                            onclick="showDeactivateModal('{{ customer._id }}', '{{ customer.username }}')"
+                                            title="Deactivate Account">
+                                        <i class="fas fa-user-slash"></i> Suspend
+                                    </button>
+                                    {% else %}
+                                    <button class="btn btn-sm btn-success" 
+                                            onclick="showReactivateModal('{{ customer._id }}', '{{ customer.username }}')"
+                                            title="Reactivate Account">
+                                        <i class="fas fa-user-check"></i> Activate
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total Customers</h5>
+                    <h2 class="text-primary">{{ total_customers }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Active Customers</h5>
+                    <h2 class="text-success">{{ active_customers }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Inactive Customers</h5>
+                    <h2 class="text-danger">{{ inactive_customers }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Quick Actions</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex gap-2">
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+                <a href="{{ url_for('add_customer') }}" class="btn btn-success">
+                    <i class="fas fa-user-plus"></i> Add New Customer
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deactivate Modal -->
+<div class="modal fade" id="deactivateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Deactivate Customer Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to deactivate this customer account? The customer will not be able to:</p>
+                <ul>
+                    <li>Log into their account</li>
+                    <li>Perform any transactions</li>
+                    <li>Apply for loans</li>
+                </ul>
+                <div class="mb-3">
+                    <label for="deactivationReason" class="form-label">Reason for Deactivation</label>
+                    <textarea class="form-control" id="deactivationReason" rows="3" required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" id="confirmDeactivate">Deactivate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reactivate Modal -->
+<div class="modal fade" id="reactivateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reactivate Customer Account</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to reactivate this customer account?</p>
+                <div class="mb-3">
+                    <label for="reactivationNotes" class="form-label">Notes</label>
+                    <textarea class="form-control" id="reactivationNotes" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="confirmReactivate">Reactivate</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentCustomerId = null;
+const deactivateModal = new bootstrap.Modal(document.getElementById('deactivateModal'));
+const reactivateModal = new bootstrap.Modal(document.getElementById('reactivateModal'));
+
+function showDeactivateModal(customerId, username) {
+    currentCustomerId = customerId;
+    document.getElementById('deactivationReason').value = '';
+    deactivateModal.show();
+}
+
+function showReactivateModal(customerId, username) {
+    currentCustomerId = customerId;
+    document.getElementById('reactivationNotes').value = '';
+    reactivateModal.show();
+}
+
+document.getElementById('confirmDeactivate').addEventListener('click', function() {
+    const reason = document.getElementById('deactivationReason').value.trim();
+    if (!reason) {
+        alert('Please provide a reason for deactivation');
+        return;
+    }
+    
+    deactivateAccount(currentCustomerId, reason);
+});
+
+document.getElementById('confirmReactivate').addEventListener('click', function() {
+    const notes = document.getElementById('reactivationNotes').value.trim();
+    reactivateAccount(currentCustomerId, notes);
+});
+
+function deactivateAccount(customerId, reason) {
+    fetch(`/admin/customer/${customerId}/deactivate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error deactivating account');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error deactivating account');
+    })
+    .finally(() => {
+        deactivateModal.hide();
+    });
+}
+
+function reactivateAccount(customerId, notes) {
+    fetch(`/admin/customer/${customerId}/reactivate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ notes: notes })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message || 'Error reactivating account');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error reactivating account');
+    })
+    .finally(() => {
+        reactivateModal.hide();
+    });
+}
+</script>
+{% endblock %} 

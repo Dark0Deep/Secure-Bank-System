@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Employees - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Employee Management</h4>
+                    <a href="{{ url_for('add_employee') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Add New Employee
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Join Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if employees %}
+                                    {% for employee in employees %}
+                                    <tr>
+                                        <td>{{ employee.username }}</td>
+                                        <td>{{ employee.email }}</td>
+                                        <td>{{ employee.role|title }}</td>
+                                        <td>{{ employee.created_at.strftime('%Y-%m-%d') }}</td>
+                                        <td>
+                                            {% if employee.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Suspended</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#employeeModal{{ employee._id }}">
+                                                    <i class="fas fa-eye"></i> View
+                                                </button>
+                                                <a href="{{ url_for('toggle_employee_status', employee_id=employee._id) }}" class="btn btn-sm {% if employee.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                                                    {% if employee.is_active %}
+                                                        <i class="fas fa-user-slash"></i> Suspend
+                                                    {% else %}
+                                                        <i class="fas fa-user-check"></i> Activate
+                                                    {% endif %}
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <!-- Employee Details Modal -->
+                                    <div class="modal fade" id="employeeModal{{ employee._id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Employee Details</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Username</label>
+                                                        <p class="form-control-static">{{ employee.username }}</p>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Email</label>
+                                                        <p class="form-control-static">{{ employee.email }}</p>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Role</label>
+                                                        <p class="form-control-static">{{ employee.role|title }}</p>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Join Date</label>
+                                                        <p class="form-control-static">{{ employee.created_at.strftime('%Y-%m-%d') }}</p>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="form-label">Status</label>
+                                                        <p class="form-control-static">
+                                                            {% if employee.is_active %}
+                                                                <span class="badge bg-success">Active</span>
+                                                            {% else %}
+                                                                <span class="badge bg-danger">Suspended</span>
+                                                            {% endif %}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <a href="{{ url_for('toggle_employee_status', employee_id=employee._id) }}" class="btn {% if employee.is_active %}btn-warning{% else %}btn-success{% endif %}">
+                                                        {% if employee.is_active %}
+                                                            <i class="fas fa-user-slash"></i> Suspend Employee
+                                                        {% else %}
+                                                            <i class="fas fa-user-check"></i> Activate Employee
+                                                        {% endif %}
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center">No employees found</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Employee Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Total Employees
+                            <span class="badge bg-primary rounded-pill">{{ employees|length }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Active Employees
+                            <span class="badge bg-success rounded-pill">{{ active_employees }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Suspended Employees
+                            <span class="badge bg-danger rounded-pill">{{ inactive_employees }}</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('admin_dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                        <a href="{{ url_for('add_employee') }}" class="btn btn-success">
+                            <i class="fas fa-user-plus"></i> Add New Employee
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

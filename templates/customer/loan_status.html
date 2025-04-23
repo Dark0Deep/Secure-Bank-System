@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Loan Status - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Your Loan Applications</h5>
+                    <a href="{{ url_for('apply_loan') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Apply for New Loan
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- Loan Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Total Loans</h6>
+                                    <p class="card-text h3">{{ loans|length }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-dark">
+                                <div class="card-body">
+                                    <h6 class="card-title">Pending</h6>
+                                    <p class="card-text h3">{{ pending_count }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Approved</h6>
+                                    <p class="card-text h3">{{ approved_count }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-danger text-white">
+                                <div class="card-body">
+                                    <h6 class="card-title">Rejected</h6>
+                                    <p class="card-text h3">{{ rejected_count }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Loan Applications Table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Application Date</th>
+                                    <th>Amount</th>
+                                    <th>Purpose</th>
+                                    <th>Status</th>
+                                    <th>Processing Time</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for loan in loans %}
+                                <tr>
+                                    <td>{{ loan.created_at.strftime('%Y-%m-%d') }}</td>
+                                    <td>₹{{ "%.2f"|format(loan.amount) }}</td>
+                                    <td>{{ loan.purpose|title }}</td>
+                                    <td>
+                                        {% if loan.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% elif loan.status == 'approved' %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if loan.status == 'pending' %}
+                                            {{ ((now - loan.created_at).days) }} days
+                                        {% else %}
+                                            {% if loan.processed_at %}
+                                                {{ ((loan.processed_at - loan.created_at).days) }} days
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#loanModal{{ loan._id }}">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </button>
+                                    </td>
+                                </tr>
+
+                                <!-- Loan Details Modal -->
+                                <div class="modal fade" id="loanModal{{ loan._id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Loan Application Details</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="loan-status-timeline mb-4">
+                                                    <div class="d-flex justify-content-between position-relative">
+                                                        <div class="timeline-point active">
+                                                            <div class="point"></div>
+                                                            <div class="label">Applied</div>
+                                                            <div class="date">{{ loan.created_at.strftime('%Y-%m-%d') }}</div>
+                                                        </div>
+                                                        <div class="timeline-point {% if loan.status != 'pending' %}active{% endif %}">
+                                                            <div class="point"></div>
+                                                            <div class="label">Processed</div>
+                                                            <div class="date">
+                                                                {% if loan.processed_at %}
+                                                                    {{ loan.processed_at.strftime('%Y-%m-%d') }}
+                                                                {% else %}
+                                                                    Pending
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                        <div class="timeline-point {% if loan.status == 'approved' and loan.disbursed %}active{% endif %}">
+                                                            <div class="point"></div>
+                                                            <div class="label">Disbursed</div>
+                                                            <div class="date">
+                                                                {% if loan.disbursed_at %}
+                                                                    {{ loan.disbursed_at.strftime('%Y-%m-%d') }}
+                                                                {% else %}
+                                                                    -
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                        <div class="progress position-absolute w-100" style="top: 10px; z-index: -1;">
+                                                            <div class="progress-bar" role="progressbar" style="width: {{ '100%' if loan.status == 'approved' else '50%' if loan.status == 'rejected' else '25%' }}"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <table class="table table-sm">
+                                                    <tr>
+                                                        <th>Application ID:</th>
+                                                        <td>{{ loan._id }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Amount:</th>
+                                                        <td>₹{{ "%.2f"|format(loan.amount) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Purpose:</th>
+                                                        <td>{{ loan.purpose|title }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Status:</th>
+                                                        <td>
+                                                            {% if loan.status == 'pending' %}
+                                                                <span class="badge bg-warning">Pending</span>
+                                                            {% elif loan.status == 'approved' %}
+                                                                <span class="badge bg-success">Approved</span>
+                                                            {% else %}
+                                                                <span class="badge bg-danger">Rejected</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                    {% if loan.status == 'approved' %}
+                                                    <tr>
+                                                        <th>Approved Amount:</th>
+                                                        <td>₹{{ "%.2f"|format(loan.amount) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th>Interest Rate:</th>
+                                                        <td>{{ loan.interest_rate|default(10) }}%</td>
+                                                    </tr>
+                                                    {% endif %}
+                                                    {% if loan.status == 'rejected' and loan.rejection_reason %}
+                                                    <tr>
+                                                        <th>Rejection Reason:</th>
+                                                        <td>{{ loan.rejection_reason }}</td>
+                                                    </tr>
+                                                    {% endif %}
+                                                </table>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No loan applications found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.loan-status-timeline {
+    padding: 20px 0;
+}
+.timeline-point {
+    text-align: center;
+    flex: 1;
+}
+.timeline-point .point {
+    width: 20px;
+    height: 20px;
+    background: #ddd;
+    border-radius: 50%;
+    margin: 0 auto;
+}
+.timeline-point.active .point {
+    background: #28a745;
+}
+.timeline-point .label {
+    margin-top: 10px;
+    font-weight: bold;
+}
+.timeline-point .date {
+    font-size: 12px;
+    color: #666;
+}
+.progress {
+    height: 4px;
+}
+.progress-bar {
+    background-color: #28a745;
+}
+</style>
+{% endblock %} 

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Search - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Customer Search</h2>
+            <p class="text-muted">Total Customers: {{ total_customers }}</p>
+        </div>
+        <div class="col-md-4">
+            <form method="GET" action="{{ url_for('customer_search') }}" class="d-flex">
+                <input type="text" name="query" class="form-control me-2" placeholder="Search by username or email" value="{{ search_query }}">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
+        </div>
+    </div>
+
+    {% if search_query %}
+        {% if search_results %}
+            {% for result in search_results %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h4 class="mb-0">Customer Details</h4>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <span class="badge bg-info">Account #{{ result.account.account_number }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Personal Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th>Username:</th>
+                                    <td>{{ result.user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td>{{ result.user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Member Since:</th>
+                                    <td>{{ result.user.created_at.strftime('%B %d, %Y') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Account Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <th>Account Number:</th>
+                                    <td>{{ result.account.account_number }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Current Balance:</th>
+                                    <td class="h4 text-success">₹{{ "%.2f"|format(result.account.balance) }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Account Status:</th>
+                                    <td><span class="badge bg-success">Active</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <h5>Recent Transactions</h5>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in result.transactions %}
+                                <tr>
+                                    <td>{{ transaction.created_at_formatted }}</td>
+                                    <td>
+                                        <span class="badge {% if transaction.type in ['deposit', 'transfer_in'] %}bg-success{% elif transaction.type in ['withdrawal', 'transfer_out'] %}bg-danger{% else %}bg-info{% endif %}">
+                                            {{ transaction.type|title|replace('_', ' ') }}
+                                        </span>
+                                    </td>
+                                    <td class="{% if transaction.type in ['deposit', 'transfer_in'] %}text-success{% elif transaction.type in ['withdrawal', 'transfer_out'] %}text-danger{% endif %}">
+                                        {% if transaction.type in ['withdrawal', 'transfer_out'] %}-{% endif %}
+                                        ₹{{ "%.2f"|format(transaction.amount) }}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">Completed</span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No recent transactions</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4">
+                        <a href="{{ url_for('view_customer_transactions', customer_id=result.user._id) }}" class="btn btn-info btn-sm">View Transactions</a>
+                        <a href="{{ url_for('admin_customer_actions', customer_id=result.user._id) }}" class="btn btn-primary btn-sm">Manage Money</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-info">
+                No customers found matching "{{ search_query }}"
+            </div>
+        {% endif %}
+    {% else %}
+        <div class="alert alert-info">
+            Enter a username or email to search for customers
+        </div>
+    {% endif %}
+</div>
+{% endblock %} 

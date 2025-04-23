@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Bank Management System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-4 mb-4">Welcome to Bank Management System</h1>
+        <p class="lead mb-5">Your trusted partner in financial management</p>
+        
+        {% if not current_user.is_authenticated %}
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg px-4 gap-3">Login</a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-secondary btn-lg px-4">Register</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Account Management</h5>
+                <p class="card-text">View balance, make deposits, and withdraw funds with ease.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Money Transfer</h5>
+                <p class="card-text">Send money to other account holders securely and instantly.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Loan Services</h5>
+                <p class="card-text">Apply for loans and manage your loan applications.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Transaction History</h5>
+                <p class="card-text">Track all your financial activities in one place.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">Secure Banking</h5>
+                <p class="card-text">Your security is our top priority with advanced encryption.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card dashboard-card">
+            <div class="card-body text-center">
+                <h5 class="card-title">24/7 Support</h5>
+                <p class="card-text">Round-the-clock customer support for your convenience.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

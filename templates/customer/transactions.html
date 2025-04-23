@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction History - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-4 mb-3 mb-md-0">
+                    <h5 class="mb-0">Transaction History</h5>
+                </div>
+                <div class="col-12 col-md-8">
+                    <div class="d-flex justify-content-md-end">
+                        <div class="btn-group filter-group" role="group">
+                            <button type="button" class="btn btn-primary active" data-filter="all">
+                                <i class="fas fa-list"></i> All
+                            </button>
+                            <button type="button" class="btn btn-outline-success" data-filter="deposit">
+                                <i class="fas fa-arrow-down"></i> Deposits
+                            </button>
+                            <button type="button" class="btn btn-outline-warning" data-filter="withdrawal">
+                                <i class="fas fa-arrow-up"></i> Withdrawals
+                            </button>
+                            <button type="button" class="btn btn-outline-info" data-filter="transfer">
+                                <i class="fas fa-exchange-alt"></i> Transfers
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-filter="loan">
+                                <i class="fas fa-hand-holding-usd"></i> Loan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Transaction Type</th>
+                            <th>Description</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-end">Balance</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionTableBody">
+                        {% for transaction in transactions %}
+                        <tr class="transaction-row" data-category="{{ transaction.category }}">
+                            <td>
+                                <span class="text-muted">
+                                    {% if transaction.timestamp %}
+                                        {% if transaction.timestamp is string %}
+                                            {{ transaction.timestamp }}
+                                        {% else %}
+                                            {{ transaction.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}
+                                        {% endif %}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if transaction.type == 'deposit' or transaction.type == 'Deposit' %}
+                                    <span class="badge bg-success"><i class="fas fa-arrow-down"></i> Deposit</span>
+                                {% elif transaction.type == 'withdrawal' or transaction.type == 'Withdrawal' %}
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-arrow-up"></i> Withdrawal</span>
+                                {% elif transaction.type == 'transfer_in' %}
+                                    <span class="badge bg-info"><i class="fas fa-arrow-right"></i> Transfer In</span>
+                                {% elif transaction.type == 'transfer_out' %}
+                                    <span class="badge bg-info"><i class="fas fa-arrow-left"></i> Transfer Out</span>
+                                {% elif transaction.type == 'loan_disbursement' %}
+                                    <span class="badge bg-secondary"><i class="fas fa-plus"></i> Loan Disbursement</span>
+                                {% elif transaction.type == 'loan_payment' %}
+                                    <span class="badge bg-primary"><i class="fas fa-minus"></i> Loan Payment</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ transaction.description }}</td>
+                            <td class="text-end {% if transaction.type in ['withdrawal', 'Withdrawal', 'transfer_out', 'loan_payment'] %}text-danger{% else %}text-success{% endif %}">
+                                <strong>
+                                    {% if transaction.type in ['withdrawal', 'Withdrawal', 'transfer_out', 'loan_payment'] %}-{% endif %}
+                                    ₹{{ "%.2f"|format(transaction.amount) }}
+                                </strong>
+                            </td>
+                            <td class="text-end">
+                                <strong>₹{{ "%.2f"|format(transaction.balance_after) }}</strong>
+                            </td>
+                            <td>
+                                {% if transaction.status == 'completed' %}
+                                    <span class="badge bg-success"><i class="fas fa-check"></i> Completed</span>
+                                {% elif transaction.status == 'pending' %}
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> Pending</span>
+                                {% elif transaction.status == 'failed' %}
+                                    <span class="badge bg-danger"><i class="fas fa-times"></i> Failed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr id="no-transactions-row">
+                            <td colspan="6" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                                    <p>No transactions found</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.filter-group {
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.filter-group .btn {
+    border: none;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    font-weight: 500;
+}
+
+.filter-group .btn:hover {
+    transform: translateY(-1px);
+}
+
+.filter-group .btn.active {
+    font-weight: 600;
+}
+
+.filter-group .btn i {
+    margin-right: 0.5rem;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+    font-weight: 500;
+}
+
+.badge i {
+    margin-right: 0.3rem;
+}
+
+.transaction-row {
+    transition: all 0.3s ease;
+}
+
+.transaction-row:hover {
+    background-color: #f8f9fa;
+}
+
+.transaction-row[style*="none"] {
+    opacity: 0;
+    transform: translateX(-10px);
+}
+
+.transaction-row:not([style*="none"]) {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.table-responsive {
+    border-radius: 0.5rem;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+}
+
+#no-transactions-row td {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border-radius: 1rem;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #eee;
+    padding: 1.5rem;
+}
+
+.card-body {
+    padding: 0;
+}
+
+@media (max-width: 768px) {
+    .filter-group {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+    }
+    
+    .filter-group .btn {
+        flex: 1 1 auto;
+        white-space: nowrap;
+        padding: 0.5rem;
+    }
+    
+    .filter-group .btn i {
+        margin-right: 0;
+    }
+    
+    .badge {
+        padding: 0.4em 0.6em;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function filterTransactions(category) {
+    // Update active button state
+    document.querySelectorAll('.filter-group .btn').forEach(btn => {
+        btn.classList.remove('active', 'btn-primary', 'btn-success', 'btn-warning', 'btn-info', 'btn-secondary');
+        btn.classList.add('btn-outline-' + btn.getAttribute('data-original-class'));
+        
+        if (btn.getAttribute('data-filter') === category) {
+            btn.classList.add('active');
+            btn.classList.remove('btn-outline-' + btn.getAttribute('data-original-class'));
+            btn.classList.add('btn-' + btn.getAttribute('data-original-class'));
+        }
+    });
+
+    // Get all transaction rows
+    const rows = document.querySelectorAll('.transaction-row');
+    let visibleCount = 0;
+    
+    // Show/hide rows based on category
+    rows.forEach(row => {
+        const rowCategory = row.getAttribute('data-category');
+        const transactionType = row.querySelector('td:nth-child(2)').textContent.trim().toLowerCase();
+        
+        let shouldShow = false;
+        if (category === 'all') {
+            shouldShow = true;
+        } else if (category === 'deposit') {
+            shouldShow = rowCategory === 'deposit' || transactionType.includes('deposit');
+        } else if (category === rowCategory) {
+            shouldShow = true;
+        }
+        
+        if (shouldShow) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    // Show "No transactions found" message if no transactions match the filter
+    const noTransactionsRow = document.querySelector('#no-transactions-row');
+    if (visibleCount === 0) {
+        if (!noTransactionsRow) {
+            const tbody = document.querySelector('#transactionTableBody');
+            const newRow = document.createElement('tr');
+            newRow.id = 'no-transactions-row';
+            newRow.innerHTML = `
+                <td colspan="6" class="text-center py-4">
+                    <div class="text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>No ${category === 'all' ? '' : category} transactions found</p>
+                    </div>
+                </td>`;
+            tbody.appendChild(newRow);
+        } else {
+            noTransactionsRow.style.display = '';
+            noTransactionsRow.querySelector('p').textContent = `No ${category === 'all' ? '' : category} transactions found`;
+        }
+    } else if (noTransactionsRow) {
+        noTransactionsRow.style.display = 'none';
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Store original button classes
+    document.querySelectorAll('.filter-group .btn').forEach(btn => {
+        const className = btn.classList.contains('btn-primary') ? 'primary' :
+                         btn.classList.contains('btn-success') ? 'success' :
+                         btn.classList.contains('btn-warning') ? 'warning' :
+                         btn.classList.contains('btn-info') ? 'info' : 'secondary';
+        btn.setAttribute('data-original-class', className);
+        
+        // Add click event listeners
+        btn.addEventListener('click', function() {
+            filterTransactions(this.getAttribute('data-filter'));
+        });
+    });
+
+    // Initialize with "All" filter
+    filterTransactions('all');
+});
+</script>
+{% endblock %} 

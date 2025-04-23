@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Account Statement{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-4">
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="text-center mb-4">
+                <h2 class="mb-3">
+                    <i class="fas fa-file-invoice text-primary me-2"></i>
+                    Customer Account Statement
+                </h2>
+                <p class="text-muted">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    Generated on: {{ generated_date }}
+                </p>
+            </div>
+
+            <hr>
+
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <h4>
+                        <i class="fas fa-user-circle text-primary me-2"></i>
+                        Customer Information
+                    </h4>
+                    <div class="table-responsive">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th style="width: 200px;">
+                                    <i class="fas fa-hashtag text-secondary me-2"></i>
+                                    Account Number:
+                                </th>
+                                <td>{{ account.account_number }}</td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-user text-secondary me-2"></i>
+                                    Customer Name:
+                                </th>
+                                <td>{{ customer.username }}</td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-envelope text-secondary me-2"></i>
+                                    Email:
+                                </th>
+                                <td>{{ customer.email }}</td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-wallet text-secondary me-2"></i>
+                                    Current Balance:
+                                </th>
+                                <td>₹{{ "{:,.2f}".format(account.balance) }}</td>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <i class="fas fa-info-circle text-secondary me-2"></i>
+                                    Account Status:
+                                </th>
+                                <td>
+                                    {% if customer.is_active is defined and customer.is_active %}
+                                    <span class="badge bg-success rounded-pill status-badge">
+                                        <i class="fas fa-shield-check me-1"></i>Active
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-danger rounded-pill status-badge">
+                                        <i class="fas fa-shield-exclamation me-1"></i>Inactive
+                                    </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <h4>
+                        <i class="fas fa-history text-primary me-2"></i>
+                        Recent Transactions
+                    </h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-calendar me-2"></i>Date</th>
+                                    <th><i class="fas fa-exchange-alt me-2"></i>Transaction Type</th>
+                                    <th><i class="fas fa-rupee-sign me-2"></i>Amount</th>
+                                    <th><i class="fas fa-sticky-note me-2"></i>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>{{ transaction.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>{{ transaction.type|title }}</td>
+                                    <td>₹{{ "{:,.2f}".format(transaction.amount) }}</td>
+                                    <td>{{ transaction.notes or '' }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="text-center mt-4">
+                <p class="text-muted mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    This is a computer-generated statement and does not require a signature.
+                </p>
+                <p class="text-muted">
+                    <i class="fas fa-headset me-2"></i>
+                    For any queries, please contact our support team.
+                </p>
+            </div>
+
+            <div class="text-center mt-4">
+                <button class="btn btn-primary me-2 action-btn" onclick="printReceipt()">
+                    <i class="fas fa-print me-2"></i>Print Receipt
+                </button>
+                <button class="btn btn-secondary action-btn" onclick="closeReceipt()">
+                    <i class="fas fa-times-circle me-2"></i>Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn {
+        display: none;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+
+.card {
+    border: none;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+.badge {
+    padding: 0.5em 0.8em;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+    transition: all 0.3s ease;
+}
+
+.badge.bg-danger {
+    background-color: #dc3545 !important;
+    transition: all 0.3s ease;
+}
+
+.status-badge {
+    font-size: 0.9rem;
+    padding: 0.6em 1em;
+}
+
+.status-badge i {
+    font-size: 1rem;
+}
+
+.action-btn {
+    transition: all 0.3s ease;
+    padding: 0.5rem 1.5rem;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.text-primary {
+    color: #0d6efd !important;
+}
+
+.text-secondary {
+    color: #6c757d !important;
+}
+
+.fas {
+    transition: all 0.3s ease;
+}
+
+th .fas, td .fas {
+    opacity: 0.8;
+}
+
+tr:hover .fas {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+h4 .fas {
+    font-size: 1.2rem;
+}
+
+.table-responsive {
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+</style>
+
+<script>
+// Function to handle printing
+function printReceipt() {
+    // Add custom print styles
+    const style = document.createElement('style');
+    style.id = 'dynamic-print-style';
+    style.media = 'print';
+    style.innerHTML = `
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        body {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Trigger print
+    window.print();
+    
+    // Remove the dynamic style after printing
+    setTimeout(() => {
+        if (style && style.parentNode) {
+            style.parentNode.removeChild(style);
+        }
+    }, 1000);
+}
+
+// Function to handle closing
+function closeReceipt() {
+    try {
+        if (window.opener && !window.opener.closed) {
+            // If opened in a new window and opener exists
+            window.close();
+        } else if (window.history.length > 1) {
+            // If there's history to go back to
+            window.history.back();
+        } else {
+            // Fallback to redirecting to dashboard
+            window.location.href = "{{ url_for('admin_dashboard') }}";
+        }
+    } catch (e) {
+        // If any error occurs, fallback to dashboard
+        window.location.href = "{{ url_for('admin_dashboard') }}";
+    }
+}
+
+// Add keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + P for print
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault();
+        printReceipt();
+    }
+    // Esc for close
+    if (e.key === 'Escape') {
+        closeReceipt();
+    }
+});
+
+// Ensure proper initialization when document loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize any Bootstrap components if needed
+    if (typeof bootstrap !== 'undefined') {
+        // Initialize tooltips if any
+        const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
+    }
+});
+</script>
+{% endblock %} 

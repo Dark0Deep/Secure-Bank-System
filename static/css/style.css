@@ -1,0 +1,136 @@
+/* General Styles */
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Card Styles */
+.card {
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    font-weight: 600;
+}
+
+/* Form Styles */
+.form-control:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Button Styles */
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Table Styles */
+.table {
+    background-color: white;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table thead th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Dashboard Cards */
+.dashboard-card {
+    transition: transform 0.2s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Transaction History */
+.transaction-history {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Alert Styles */
+.alert {
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+/* Navigation */
+.navbar {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .card {
+        margin-bottom: 15px;
+    }
+}
+
+/* Custom Classes */
+.balance-display {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.currency-symbol {
+    font-size: 1.5rem;
+    color: #6c757d;
+}
+
+/* Loan Application Form */
+.loan-form {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Employee Management */
+.employee-card {
+    border-left: 4px solid #0d6efd;
+}
+
+/* Customer Report */
+.report-section {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+/* Transaction Types */
+.transaction-deposit {
+    color: #28a745;
+}
+
+.transaction-withdrawal {
+    color: #dc3545;
+}
+
+.transaction-transfer {
+    color: #0dcaf0;
+}
+
+.transaction-loan {
+    color: #6f42c1;
+} 

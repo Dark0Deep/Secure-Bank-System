@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Loan History - {{ customer.username }} - Bank Management System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Customer Info Card -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Customer Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Name:</strong> {{ customer.username }}</p>
+                    <p><strong>Email:</strong> {{ customer.email }}</p>
+                    <p><strong>Account Number:</strong> {{ customer.account_number }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Current Balance:</strong> ₹{{ "%.2f"|format(customer.balance) }}</p>
+                    <p><strong>Account Status:</strong> 
+                        <span class="badge {% if customer.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                            {{ 'Active' if customer.is_active else 'Inactive' }}
+                        </span>
+                    </p>
+                    <p><strong>Member Since:</strong> {{ customer.registered_on.strftime('%Y-%m-%d') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loan Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body">
+                    <h6 class="card-title">Pending Loans</h6>
+                    <h2 class="display-4 mb-0">{{ pending_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">Approved Loans</h6>
+                    <h2 class="display-4 mb-0">{{ approved_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">Rejected Loans</h6>
+                    <h2 class="display-4 mb-0">{{ rejected_count }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <h6 class="card-title">Total Amount Approved</h6>
+                    <h2 class="h3 mb-0">₹{{ "%.2f"|format(total_approved_amount) }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loan History -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Loan History</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Application Date</th>
+                            <th>Amount</th>
+                            <th>Purpose</th>
+                            <th>Status</th>
+                            <th>Processing Time</th>
+                            <th>Processed On</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loan in loans %}
+                        <tr>
+                            <td>{{ loan.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>₹{{ "%.2f"|format(loan.amount) }}</td>
+                            <td>{{ loan.purpose }}</td>
+                            <td>
+                                <span class="badge {% if loan.status == 'approved' %}bg-success
+                                    {% elif loan.status == 'rejected' %}bg-danger
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ loan.status|title }}
+                                </span>
+                            </td>
+                            <td>{{ loan.processing_time }} days</td>
+                            <td>{{ loan.processed_at.strftime('%Y-%m-%d %H:%M') if loan.processed_at else 'N/A' }}</td>
+                            <td>
+                                <button type="button" class="btn btn-sm btn-info" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#loanDetailsModal{{ loan._id }}">
+                                    <i class="fas fa-eye"></i> Details
+                                </button>
+                            </td>
+                        </tr>
+
+                        <!-- Loan Details Modal -->
+                        <div class="modal fade" id="loanDetailsModal{{ loan._id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Loan Details</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <p><strong>Application Date:</strong> {{ loan.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                                <p><strong>Amount:</strong> ₹{{ "%.2f"|format(loan.amount) }}</p>
+                                                <p><strong>Purpose:</strong> {{ loan.purpose }}</p>
+                                                <p><strong>Duration:</strong> {{ loan.duration }} months</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>Status:</strong> 
+                                                    <span class="badge {% if loan.status == 'approved' %}bg-success
+                                                        {% elif loan.status == 'rejected' %}bg-danger
+                                                        {% else %}bg-warning{% endif %}">
+                                                        {{ loan.status|title }}
+                                                    </span>
+                                                </p>
+                                                <p><strong>Processing Time:</strong> {{ loan.processing_time }} days</p>
+                                                <p><strong>Processed On:</strong> {{ loan.processed_at.strftime('%Y-%m-%d %H:%M') if loan.processed_at else 'N/A' }}</p>
+                                                <p><strong>Processed By:</strong> {{ loan.processed_by_name if loan.processed_by_name else 'N/A' }}</p>
+                                            </div>
+                                        </div>
+                                        {% if loan.status == 'rejected' and loan.rejection_reason %}
+                                        <div class="alert alert-danger">
+                                            <strong>Rejection Reason:</strong><br>
+                                            {{ loan.rejection_reason }}
+                                        </div>
+                                        {% endif %}
+                                        {% if loan.status == 'approved' %}
+                                        <div class="alert alert-success">
+                                            <strong>EMI Details:</strong><br>
+                                            Monthly EMI: ₹{{ "%.2f"|format(loan.monthly_emi) if loan.monthly_emi else 'N/A' }}<br>
+                                            Total Interest: ₹{{ "%.2f"|format(loan.total_interest) if loan.total_interest else 'N/A' }}<br>
+                                            Total Amount Payable: ₹{{ "%.2f"|format(loan.total_amount) if loan.total_amount else 'N/A' }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        {% if loan.status == 'pending' %}
+                                        <button type="button" class="btn btn-success" onclick="approveLoan('{{ loan._id }}')">
+                                            Approve
+                                        </button>
+                                        <button type="button" class="btn btn-danger" onclick="rejectLoan('{{ loan._id }}')">
+                                            Reject
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1rem;
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.badge {
+    font-size: 0.85rem;
+    padding: 0.4em 0.8em;
+}
+
+.modal-content {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+.alert {
+    margin-bottom: 0;
+    border-radius: 0.25rem;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function approveLoan(loanId) {
+    if (confirm('Are you sure you want to approve this loan?')) {
+        fetch(`/admin/loans/${loanId}/approve`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error approving loan');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error approving loan');
+        });
+    }
+}
+
+function rejectLoan(loanId) {
+    const reason = prompt('Please enter the reason for rejection:');
+    if (reason) {
+        fetch(`/admin/loans/${loanId}/reject`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ reason: reason })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Error rejecting loan');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error rejecting loan');
+        });
+    }
+}
+</script>
+{% endblock %} 
