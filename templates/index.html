@@ -1,11 +1,14 @@
 {% extends "base.html" %}
 
-{% block title %}Welcome to Bank Management System{% endblock %}
+{% block title %}Welcome to Secure Bank{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8 text-center">
-        <h1 class="display-4 mb-4">Welcome to Bank Management System</h1>
+        <!-- Title in Black -->
+        <h1 class="display-4 mb-4 fw-bold shadow-sm" style="color: #000000;">
+            Welcome to Secure Bank
+        </h1>
         <p class="lead mb-5">Your trusted partner in financial management</p>
         
         {% if not current_user.is_authenticated %}
@@ -19,7 +22,7 @@
 
 <div class="row mt-5">
     <div class="col-md-4">
-        <div class="card dashboard-card">
+        <div class="card dashboard-card" style="background-color: #E3F2FD; min-height: 150px;">
             <div class="card-body text-center">
                 <h5 class="card-title">Account Management</h5>
                 <p class="card-text">View balance, make deposits, and withdraw funds with ease.</p>
@@ -28,7 +31,7 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card dashboard-card">
+        <div class="card dashboard-card" style="background-color: #C8E6C9; min-height: 150px;">
             <div class="card-body text-center">
                 <h5 class="card-title">Money Transfer</h5>
                 <p class="card-text">Send money to other account holders securely and instantly.</p>
@@ -37,7 +40,7 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card dashboard-card">
+        <div class="card dashboard-card" style="background-color: #FFF9C4; min-height: 150px;">
             <div class="card-body text-center">
                 <h5 class="card-title">Loan Services</h5>
                 <p class="card-text">Apply for loans and manage your loan applications.</p>
@@ -48,7 +51,7 @@
 
 <div class="row mt-4">
     <div class="col-md-4">
-        <div class="card dashboard-card">
+        <div class="card dashboard-card" style="background-color: #FFECB3; min-height: 150px;">
             <div class="card-body text-center">
                 <h5 class="card-title">Transaction History</h5>
                 <p class="card-text">Track all your financial activities in one place.</p>
@@ -57,7 +60,7 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card dashboard-card">
+        <div class="card dashboard-card" style="background-color: #F5F5F5; min-height: 150px;">
             <div class="card-body text-center">
                 <h5 class="card-title">Secure Banking</h5>
                 <p class="card-text">Your security is our top priority with advanced encryption.</p>
@@ -66,7 +69,7 @@
     </div>
     
     <div class="col-md-4">
-        <div class="card dashboard-card">
+        <div class="card dashboard-card" style="background-color: #E1BEE7; min-height: 150px;">
             <div class="card-body text-center">
                 <h5 class="card-title">24/7 Support</h5>
                 <p class="card-text">Round-the-clock customer support for your convenience.</p>
@@ -74,4 +77,4 @@
         </div>
     </div>
 </div>
-{% endblock %} 
+{% endblock %}

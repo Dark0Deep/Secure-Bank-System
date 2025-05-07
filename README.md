@@ -29,7 +29,7 @@ A comprehensive bank management system with customer and admin functionalities.
    ```
    python app.py
    ```
-5. Access the application at http://localhost:5000
+5. Access the application at http://localhopythst:5000
 
 ## Project Structure
 
